@@ -74,7 +74,7 @@ node app.js | pino-pretty
   Default: `level`.
 - `--levelLabel` (`-b`): Output the log level using the specified label.
   Default: `levelLabel`.
-- `--minimumLevel` (`-L`): Hide messages below the specified log level. Accepts a number, `trace`, `debug`, `info`, `warn`, `error`, or `fatal`. If any more filtering is required, consider using [`jq`](https://stedolan.github.io/jq/).
+- `--minimumLevel` (`-L`): Hide messages below the specified log level. Accepts a number, `trace`, `debug`, `info`, `warn`, `error`, or `fatal`. Default: no minimum (process every line received). This only filters lines that already reached pino-pretty — the Pino logger itself also has a `level` (default `info`) that controls which logs are written. Lower both if you want `debug` / `trace` output. If any more filtering is required, consider using [`jq`](https://stedolan.github.io/jq/).
 - `--customLevels` (`-x`): Override default levels with custom levels, e.g. `-x err:99,info:1`
 - `--customColors` (`-X`): Override default colors with custom colors, e.g. `-X err:red,info:blue`
 - `--useOnlyCustomProps` (`-U`): Only use custom levels and colors (if provided) (default: true); else fallback to default levels and colors, e.g. `-U false`
@@ -198,9 +198,47 @@ const stream = pretty({
 })
 const logger = pino({ level: 'info' }, stream)
 
-// Nothing is printed
+// Nothing is printed — Pino drops debug before it reaches the stream
 logger.debug('hi')
 ```
+
+### Log levels (Pino vs pino-pretty)
+
+Two independent filters apply:
+
+1. **Pino `level`** (default `info`) — controls which logs the logger writes at all.
+2. **pino-pretty `minimumLevel` / CLI `-L`**, or a transport target `level` — filters among lines that were already written.
+
+Setting only the pretty / transport level to `trace` does **not** show `trace` logs when Pino still defaults to `info`. Lower both:
+
+```js
+const pino = require('pino')
+
+const logger = pino({
+  level: 'trace',
+  transport: {
+    targets: [
+      {
+        level: 'trace',
+        target: 'pino-pretty',
+        options: {
+          minimumLevel: 'trace',
+        },
+      },
+    ],
+  },
+})
+
+logger.trace('hi') // printed
+```
+
+The same applies when piping:
+
+```bash
+node -e "require('pino')({level:'trace'}).trace('hi')" | pino-pretty -L trace
+```
+
+Custom levels must be registered with both Pino and pino-pretty (`customLevels` / CLI `-x`).
 
 ### Usage with Jest
 
@@ -291,7 +329,7 @@ The options accepted have keys corresponding to the options described in [CLI Ar
   customColors: 'err:red,info:blue', // --customColors
   customLevels: 'err:99,info:1', // --customLevels (not required with pino >=8.21.0)
   levelLabel: 'levelLabel', // --levelLabel
-  minimumLevel: 'info', // --minimumLevel
+  minimumLevel: undefined, // --minimumLevel
   useOnlyCustomProps: true, // --useOnlyCustomProps
   // The file or file descriptor (1 is stdout) to write to
   destination: 1,
