@@ -223,8 +223,9 @@ test('test pino-pretty', () => {
 
 Using the new [pino v7+
 transports](https://getpino.io/#/docs/transports?id=v7-transports) not all
-options are serializable, for example if you want to use `messageFormat` as a
-function you will need to wrap `pino-pretty` in a custom module.
+options are serializable. Function options such as `messageFormat` and
+`customPrettifiers` cannot be passed through `transport.options` (they fail the
+worker data clone). Wrap `pino-pretty` in a custom module instead.
 
 Executing `main.js` below will log a colorized `hello world` message using a
 custom function `messageFormat`:
@@ -249,7 +250,11 @@ logger.info('world')
 // pino-pretty-transport.js
 module.exports = opts => require('pino-pretty')({
   ...opts,
-  messageFormat: (log, messageKey) => `hello ${log[messageKey]}`
+  messageFormat: (log, messageKey) => `hello ${log[messageKey]}`,
+  // customPrettifiers must live here too — not in transport.options
+  customPrettifiers: {
+    script: (value, key, log, { colors }) => colors.yellow(value)
+  }
 })
 ```
 
@@ -327,7 +332,9 @@ you can specify a prettifier for it:
     query: prettifyQuery
   }
 }
-//...
+// `prettifyQuery` is your own function — pino-pretty does not export named
+// colorizers or property formatters. Color helpers are available as
+// `extras.colors` (Colorette) inside the prettifier signature below.
 const prettifyQuery = value => {
   // do some prettify magic
 }
@@ -344,10 +351,14 @@ All prettifiers use this function signature:
 * `keyName` - the name of the property (useful for `level` and `message` when `levelKey` or `messageKey` is used)
 * `logObj` - the full log object, for context
 * `extras` - an object containing **additional** data/functions created in the context of this pino-pretty logger or specific to the key (see `level` prettifying below)
-  * All `extras` objects contain `colors` which is a [Colorette](https://github.com/jorgebucaran/colorette?tab=readme-ov-file#supported-colors) object containing color functions. Colors are enabled based on `colorize` provided to pino-pretty or `colorette.isColorSupported` if `colorize` was not provided.
+  * All `extras` objects contain `colors` which is a [Colorette](https://github.com/jorgebucaran/colorette?tab=readme-ov-file#supported-colors) object containing color functions (`colors.red`, `colors.yellow`, …). These are **not** exports of `pino-pretty`. Colors are enabled based on `colorize` provided to pino-pretty or `colorette.isColorSupported` if `colorize` was not provided.
 
 Additionally, `customPrettifiers` can be used to format the `time`, `hostname`,
 `pid`, `name`, `caller` and `level` outputs AS WELL AS any arbitrary key-value that exists on a given log object.
+
+When using pino transports, define `customPrettifiers` in a custom transport
+module (see [Handling non-serializable options](#handling-non-serializable-options)).
+Passing functions through `transport.options` will throw a DataCloneError.
 
 An example usage of `customPrettifiers` using all parameters from the function signature:
 
@@ -360,12 +371,12 @@ An example usage of `customPrettifiers` using all parameters from the function s
 
     // The argument for the level-prettifier may vary depending
     // on if the levelKey option is used or not.
-    // By default this will be the same numerics as the Pino default:
-    level: logLevel => `LEVEL: ${logLevel}`,
+    // By default this will be the same numerics as the Pino default.
     // level provides additional data in `extras`:
     // * label => derived level label string
     // * labelColorized => derived level label string with colorette colors applied based on customColors and whether colors are supported
-    level: (logLevel, key, log, { label, labelColorized, colors }) => `LEVEL: ${logLevel} LABEL: ${levelLabel} COLORIZED LABEL: ${labelColorized}`,
+    level: (logLevel, key, log, { label, labelColorized, colors }) =>
+      `LEVEL: ${logLevel} LABEL: ${label} COLORIZED LABEL: ${labelColorized}`,
 
     // other prettifiers can be used for the other keys if needed, for example
     hostname: hostname => `MY HOST: ${hostname}`,
