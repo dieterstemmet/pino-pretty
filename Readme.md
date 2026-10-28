@@ -204,20 +204,39 @@ logger.debug('hi')
 
 ### Usage with Jest
 
-Logging with Jest is _problematic_, as the test framework requires no asynchronous operation to
-continue after the test has finished. The following is the only supported way to use this module
-with Jest:
+Jest is a poor fit for verifying pretty-printed logs. It patches `console` and manages its own
+output buffering, so lines written through SonicBoom (including `pretty({ sync: true })`) often
+show up truncated, reordered, or missing in the test reporter. `sync: true` does **not** make
+Jest render pino-pretty output reliably.
+
+For assertions, do not depend on the reporter. Pass Pino a destination stream you control, collect
+the NDJSON (or prettified strings), and assert on that buffer when the test ends. See the discussion
+in [pino#1274](https://github.com/pinojs/pino/issues/1274#issuecomment-997971329).
+
+If you only need human-readable logs while developing tests, prefer `prettyFactory` and write
+directly to `process.stdout` (avoid `console.log`, which Jest patches):
 
 ```js
 import pino from 'pino'
-import pretty from 'pino-pretty'
+import { prettyFactory } from 'pino-pretty'
 
 test('test pino-pretty', () => {
-  const logger = pino(pretty({ sync: true }));
-  logger.info('Info');
-  logger.error('Error');
-});
+  const prettify = prettyFactory({ sync: true })
+  const logger = pino({}, {
+    write (data) {
+      process.stdout.write(prettify(data))
+    }
+  })
+  logger.info('Info')
+  logger.error('Error')
+})
 ```
+
+Another option is to pipe the test run so Node flushes stdio outside Jest's reporter, e.g.
+`jest | cat` (use `FORCE_COLOR=1` if you need colors).
+
+In short: treat pino-pretty as a human log view, not as something Jest owns. Prefer collecting
+logs on a stream for assertions.
 
 ### Handling non-serializable options
 
