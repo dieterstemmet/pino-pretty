@@ -101,7 +101,7 @@ node app.js | pino-pretty
   (`-I time,hostname,req.headers,log\.domain\.corp/foo`).
 - `--hideObject` (`-H`): Hide objects from output (but not error object)
 - `--singleLine` (`-S`): Print each log message on a single line (errors will still be multi-line)
-- `--config`: Specify a path to a config file containing the pino-pretty options.  pino-pretty will attempt to read from a `.pino-prettyrc` in your current directory (`process.cwd`) if not specified
+- `--config`: Specify a path to a config file containing pino-pretty options. When omitted, pino-pretty looks in `process.cwd()` for (in order) `pino-pretty.config.cjs`, `pino-pretty.config.js`, `.pino-prettyrc`, or `.pino-prettyrc.json`. A `.js` / `.cjs` config can `module.exports` any option, including functions such as `customPrettifiers` and `messageFormat` that cannot be passed as CLI flags.
 
 <a id="integration"></a>
 ## Programmatic Integration
@@ -375,6 +375,24 @@ An example usage of `customPrettifiers` using all parameters from the function s
     myCustomLogProp: (value, key, log, { colors }) => `My Prop -> ${colors.bold(value)} <--`
   }
 }
+```
+
+CLI usage cannot pass functions as flags. Put `customPrettifiers` in a JS config
+file instead (auto-loaded from the working directory, or via `--config`):
+
+```js
+// pino-pretty.config.js
+module.exports = {
+  ignore: 'hostname',
+  customPrettifiers: {
+    trace: (trace) => '\n' + String(trace).replace(/\\n/g, '\n')
+  }
+}
+```
+
+```bash
+node app.js | pino-pretty
+# or: node app.js | pino-pretty --config ./pino-pretty.config.js
 ```
 
 `messageFormat` option allows you to customize the message output.

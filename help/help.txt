@@ -6,7 +6,7 @@
   
   Options:
     -c, --colorize              Force adding color sequences to the output
-    -C, --config                specify a path to a json file containing the pino-pretty options
+    -C, --config                path to a config file (js/cjs/json/.pino-prettyrc); JS configs may export functions such as customPrettifiers
     -f, --crlf                  Append CRLF instead of LF to formatted lines
     -X, --customColors          Override default colors using names from https://www.npmjs.com/package/colorette (`-X err:red,info:blue`)
     -x, --customLevels          Override default levels (`-x err:99,info:1`)
@@ -64,5 +64,8 @@
 
     - Loads options from a config file
     $ cat log | pino-pretty --config=/path/to/config.json
+
+    - Or use a JS config (supports customPrettifiers / messageFormat functions)
+    $ cat log | pino-pretty --config=./pino-pretty.config.js
 
   
