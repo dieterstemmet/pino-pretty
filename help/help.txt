@@ -65,4 +65,7 @@
     - Loads options from a config file
     $ cat log | pino-pretty --config=/path/to/config.json
 
+    - Set options via PINO_PRETTY_* environment variables
+    $ cat log | PINO_PRETTY_SINGLE_LINE=true PINO_PRETTY_COLORIZE=true pino-pretty
+
   

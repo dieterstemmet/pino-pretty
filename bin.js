@@ -72,9 +72,10 @@ if (cmd.h || cmd.help) {
 
   // Remove default values
   opts = filter(opts, value => value !== DEFAULT_VALUE)
+  const envConfig = loadEnvConfig()
   const config = loadConfig(opts.config)
-  // Override config with cli options
-  opts = Object.assign({}, config, opts)
+  // Priority: CLI flags > config file > env vars
+  opts = Object.assign({}, envConfig, config, opts)
   // set defaults
   opts.errorLikeObjectKeys = opts.errorLikeObjectKeys || 'err,error'
   opts.errorProps = opts.errorProps || ''
@@ -86,6 +87,57 @@ if (cmd.h || cmd.help) {
   /* istanbul ignore next */
   if (!process.stdin.isTTY && !fs.fstatSync(process.stdin.fd).isFile()) {
     process.once('SIGINT', function noOp () {})
+  }
+
+  /**
+   * Load pino-pretty configuration from environment variables.
+   * Options use the `PINO_PRETTY_` prefix and SCREAMING_SNAKE_CASE names
+   * matching the camelCase option names (e.g. `--singleLine` →
+   * `PINO_PRETTY_SINGLE_LINE=true`). Boolean options accept `true`/`1` and
+   * `false`/`0` (case-insensitive); invalid values are ignored.
+   * @returns {object}
+   */
+  function loadEnvConfig () {
+    const envMap = {
+      PINO_PRETTY_COLORIZE: { key: 'colorize', type: 'boolean' },
+      PINO_PRETTY_COLORIZE_OBJECTS: { key: 'colorizeObjects', type: 'boolean' },
+      PINO_PRETTY_CRLF: { key: 'crlf', type: 'boolean' },
+      PINO_PRETTY_ERROR_PROPS: { key: 'errorProps', type: 'string' },
+      PINO_PRETTY_LEVEL_FIRST: { key: 'levelFirst', type: 'boolean' },
+      PINO_PRETTY_MINIMUM_LEVEL: { key: 'minimumLevel', type: 'string' },
+      PINO_PRETTY_CUSTOM_LEVELS: { key: 'customLevels', type: 'string' },
+      PINO_PRETTY_CUSTOM_COLORS: { key: 'customColors', type: 'string' },
+      PINO_PRETTY_USE_ONLY_CUSTOM_PROPS: { key: 'useOnlyCustomProps', type: 'boolean' },
+      PINO_PRETTY_ERROR_LIKE_OBJECT_KEYS: { key: 'errorLikeObjectKeys', type: 'string' },
+      PINO_PRETTY_MESSAGE_KEY: { key: 'messageKey', type: 'string' },
+      PINO_PRETTY_LEVEL_KEY: { key: 'levelKey', type: 'string' },
+      PINO_PRETTY_LEVEL_LABEL: { key: 'levelLabel', type: 'string' },
+      PINO_PRETTY_MESSAGE_FORMAT: { key: 'messageFormat', type: 'string' },
+      PINO_PRETTY_TIMESTAMP_KEY: { key: 'timestampKey', type: 'string' },
+      PINO_PRETTY_TRANSLATE_TIME: { key: 'translateTime', type: 'string' },
+      PINO_PRETTY_IGNORE: { key: 'ignore', type: 'string' },
+      PINO_PRETTY_INCLUDE: { key: 'include', type: 'string' },
+      PINO_PRETTY_HIDE_OBJECT: { key: 'hideObject', type: 'boolean' },
+      PINO_PRETTY_SINGLE_LINE: { key: 'singleLine', type: 'boolean' }
+    }
+
+    const result = {}
+    for (const [envKey, { key, type }] of Object.entries(envMap)) {
+      const value = process.env[envKey]
+      if (value === undefined || value === '') continue
+
+      if (type === 'boolean') {
+        const lower = value.toLowerCase()
+        if (lower === 'true' || lower === '1') {
+          result[key] = true
+        } else if (lower === 'false' || lower === '0') {
+          result[key] = false
+        }
+      } else {
+        result[key] = value
+      }
+    }
+    return result
   }
 
   function loadConfig (configPath) {
