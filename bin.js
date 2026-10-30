@@ -60,13 +60,15 @@ if (cmd.h || cmd.help) {
       ignore: 'i',
       include: 'I',
       hideObject: 'H',
-      singleLine: 'S'
+      singleLine: 'S',
+      sortKeys: 'sortKeys'
     },
     default: {
       messageKey: DEFAULT_VALUE,
       minimumLevel: DEFAULT_VALUE,
       levelKey: DEFAULT_VALUE,
-      timestampKey: DEFAULT_VALUE
+      timestampKey: DEFAULT_VALUE,
+      sortKeys: DEFAULT_VALUE
     }
   })
 
@@ -78,6 +80,10 @@ if (cmd.h || cmd.help) {
   // set defaults
   opts.errorLikeObjectKeys = opts.errorLikeObjectKeys || 'err,error'
   opts.errorProps = opts.errorProps || ''
+  // `--sortKeys` with no value becomes `true` (ascending)
+  if (opts.sortKeys === true || opts.sortKeys === '') {
+    opts.sortKeys = true
+  }
 
   const res = build(opts)
   pump(process.stdin, res)

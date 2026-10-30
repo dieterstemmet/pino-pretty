@@ -74,6 +74,13 @@ declare namespace PinoPretty {
      */
     singleLine?: boolean;
     /**
+     * Sort object keys in the meta section.
+     * `true` or `'asc'` for ascending, `'desc'` for descending, or a custom
+     * comparator `(a, b) => number`.
+     * @default false
+     */
+    sortKeys?: boolean | 'asc' | 'desc' | ((a: string, b: string) => number);
+    /**
      * The key in the JSON object to use for timestamp display.
      * @default "time"
      */

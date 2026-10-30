@@ -61,6 +61,9 @@ const pretty = require('./lib/pretty')
  * @property {boolean} [singleLine=false] When `true` any objects, except error
  * objects, in the log data will be printed as a single line instead as multiple
  * lines.
+ * @property {boolean|string|function} [sortKeys=false] When `true` or `'asc'`,
+ * sorts object keys in the meta section alphabetically ascending. When
+ * `'desc'`, sorts descending. When a function, uses it as the comparator.
  * @property {string} [timestampKey='time'] Defines the key in incoming logs
  * that contains the timestamp of the log, if present.
  * @property {boolean|string} [translateTime=true] When true, will translate a
@@ -94,6 +97,7 @@ const defaultOptions = {
   messageKey: MESSAGE_KEY,
   minimumLevel: undefined,
   singleLine: false,
+  sortKeys: false,
   timestampKey: TIMESTAMP_KEY,
   translateTime: true,
   useOnlyCustomProps: true
@@ -140,6 +144,11 @@ function normalizeBooleanOptions (options) {
   // Only normalize if it's exactly "true" or "false"
   if ('translateTime' in normalized && (normalized.translateTime === 'true' || normalized.translateTime === 'false')) {
     normalized.translateTime = normalizeBoolean(normalized.translateTime)
+  }
+
+  // sortKeys can be boolean, 'asc'|'desc', or a function
+  if ('sortKeys' in normalized && (normalized.sortKeys === 'true' || normalized.sortKeys === 'false')) {
+    normalized.sortKeys = normalizeBoolean(normalized.sortKeys)
   }
 
   return normalized

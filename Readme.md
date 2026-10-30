@@ -101,6 +101,7 @@ node app.js | pino-pretty
   (`-I time,hostname,req.headers,log\.domain\.corp/foo`).
 - `--hideObject` (`-H`): Hide objects from output (but not error object)
 - `--singleLine` (`-S`): Print each log message on a single line (errors will still be multi-line)
+- `--sortKeys`: Sort object keys in the meta section. Pass with no value or `asc` for ascending alphabetical order, or `desc` for descending. A custom comparator function is supported only via the programmatic API. Default: unset (insertion order).
 - `--config`: Specify a path to a config file containing the pino-pretty options.  pino-pretty will attempt to read from a `.pino-prettyrc` in your current directory (`process.cwd`) if not specified
 
 <a id="integration"></a>
@@ -288,6 +289,7 @@ The options accepted have keys corresponding to the options described in [CLI Ar
   include: 'level,time', // --include
   hideObject: false, // --hideObject
   singleLine: false, // --singleLine
+  sortKeys: false, // --sortKeys (also 'asc', 'desc', or a comparator function)
   customColors: 'err:red,info:blue', // --customColors
   customLevels: 'err:99,info:1', // --customLevels (not required with pino >=8.21.0)
   levelLabel: 'levelLabel', // --levelLabel
