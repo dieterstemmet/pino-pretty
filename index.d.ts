@@ -63,6 +63,7 @@ declare namespace PinoPretty {
     levelLabel?: string;
     /**
      * The key in the JSON object to use as the highlighted message.
+     * Nested keys are supported with each property delimited by a `.`.
      * @default "msg"
      *
      * Not required when used with pino >= 8.21.0
@@ -75,6 +76,7 @@ declare namespace PinoPretty {
     singleLine?: boolean;
     /**
      * The key in the JSON object to use for timestamp display.
+     * Nested keys are supported with each property delimited by a `.`.
      * @default "time"
      */
     timestampKey?: string;

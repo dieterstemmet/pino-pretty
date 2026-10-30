@@ -54,7 +54,8 @@ const pretty = require('./lib/pretty')
  * to defined tokens. When a function, a synchronous function that returns a
  * formatted string.
  * @property {string} [messageKey='msg'] Defines the key in incoming logs that
- * contains the message of the log, if present.
+ * contains the message of the log, if present. Nested keys are supported with
+ * each property delimited by a `.` (same rules as `levelKey`).
  * @property {undefined|string|number} [minimumLevel=undefined] The minimum
  * level for logs that should be processed. Any logs below this level will
  * be omitted.
@@ -62,7 +63,8 @@ const pretty = require('./lib/pretty')
  * objects, in the log data will be printed as a single line instead as multiple
  * lines.
  * @property {string} [timestampKey='time'] Defines the key in incoming logs
- * that contains the timestamp of the log, if present.
+ * that contains the timestamp of the log, if present. Nested keys are supported
+ * with each property delimited by a `.` (same rules as `levelKey`).
  * @property {boolean|string} [translateTime=true] When true, will translate a
  * JavaScript date integer into a human-readable string. If set to a string,
  * it must be a format string.
